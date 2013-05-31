@@ -26,34 +26,37 @@ interface
 {%endregion}//-------------------------------------------[ compiler directives ]
 type
 
+  {УКАЗАТЕЛЬ на УЗЕЛ стека}
+ pInkNodeStack=^rInkNodeStack;
+
   {УЗЕЛ связного списка }
  rInkNodeStack=record
-    next:pointer;  //< ссылка-указатель на следующий элемент очереди
-    DATA:pointer;  //< ссылка-указатель на полезную информацию
+    next:pInkNodeStack;  //< следующий элемент стека
+    DATA:pointer;        //< указатель на полезную информацию
   end;
 
-  {УКАЗАТЕЛЬ на УЗЕЛ связного списка }
- pInkNodeStack=^rInkNodeStack;
+  {УКАЗАТЕЛЬ на СТЕК}
+ pInkStack=pInkNodeStack;
 
 type
 
   {"callBack" при УНИЧТОЖЕНИИ !!! СТАТИЧЕСКАЯ функция !!!
     @param(NODE указатель на УЗЕЛ списка [pInkNodeStack])  }
- fInkNodeStack_doDispose=procedure(NODE:pointer);
+ fInkStack_Destroy=procedure(const NODE:pointer);
   {"callBack" при обходе очереди !!! метод ОБЪЕКТА-класса !!!
     @param(NODE указатель на УЗЕЛ очереди [pInkNodeStack]) }
- aInkNodeStack_doDispose=procedure(NODE:pointer) of object;
+ aInkStack_Destroy=procedure(const NODE:pointer) of object;
 
   {"callBack" обработать Узел при обходе очереди !!! СТАТИЧЕСКАЯ функция !!!
     @param (Data АДРЕС-памяти, некая инфа используемая при обходе)
     @param (NODE это ссылка-указатель на УЗЕЛ очереди [pQueueNode])
     @return(continue @true -- продолжить обход; @false -- ПРЕКРАТИТЬ)  }
- fInkNodeStack_doProcess=function(const Data:pointer; const NODE:pointer):boolean;
+ fInkStack_Process=function(const Data:pointer; const NODE:pointer):boolean;
   {"callBack" обработать Узел при обходе очереди !!! метод ОБЪЕКТА-класса !!!
     @param (Data АДРЕС-памяти, некая инфа используемая при обходе)
     @param (NODE это ссылка-указатель на УЗЕЛ очереди [pQueueNode])
     @return(@true -- продолжить обход; @false -- ПРЕКРАТИТЬ)  }
- aInkNodeStack_doProcess=function(const Data:pointer; const NODE:pointer):boolean;
+ aInkStack_Process=function(const Data:pointer; const NODE:pointer):boolean of object;
 
 type
 
@@ -65,30 +68,25 @@ const
  cInkStack_NdfIndex=cInkStack_MaxCount;
  cInkStack_MaxIndex=cInkStack_NdfIndex-1;
 
-procedure InkNodeStack_Create (out node:pointer; const DATA,NEXT:pointer);      {$ifdef _INLINE_} inline; {$endif} overload;
-procedure InkNodeStack_Create (out node:pointer);                               {$ifdef _INLINE_} inline; {$endif} overload;
-procedure InkNodeStack_Destroy(var node:pointer);                               {$ifdef _INLINE_} inline; {$endif}
+function  InkNodeStack_Create (const DATA,NEXT:pointer):pointer;                {$ifdef _INLINE_} inline; {$endif}
+procedure InkNodeStack_Destroy(const node:pointer);                               {$ifdef _INLINE_} inline; {$endif}
 //---
 procedure InkNodeStack_setNext(const node,next:pointer);                        {$ifdef _INLINE_} inline; {$endif}
 function  InkNodeStack_getNext(const node:pointer):pointer;                     {$ifdef _INLINE_} inline; {$endif}
 //---
 function  InkNodeStack_getDATA(const node:pointer):pointer;                     {$ifdef _INLINE_} inline; {$endif}
+procedure InkNodeStack_setDATA(const node:pointer; const DATA:pointer);         {$ifdef _INLINE_} inline; {$endif}
 
 implementation
 
-procedure InkNodeStack_Create(out node:pointer; const DATA,NEXT:pointer);
+function  InkNodeStack_Create(const DATA,NEXT:pointer):pointer;
 begin
-    new(pInkNodeStack(node));
-    pInkNodeStack(node)^.DATA:=DATA;
-    pInkNodeStack(node)^.next:=NEXT;
+    new(pInkNodeStack(result));
+    pInkNodeStack(result)^.DATA:=DATA;
+    pInkNodeStack(result)^.next:=NEXT;
 end;
 
-procedure InkNodeStack_Create(out node:pointer);
-begin
-    InkNodeStack_Create(node, nil,nil);
-end;
-
-procedure InkNodeStack_Destroy(var node:pointer);
+procedure InkNodeStack_Destroy(const node:pointer);
 begin
     DISPOSE(pInkNodeStack(node));
 end;
@@ -110,7 +108,12 @@ end;
 {[УЗЕЛ связного списка] вернуть указатель на ДАННЫЕ}
 function InkNodeStack_getDATA(const node:pointer):pointer;
 begin
-    result:=pInkNodeStack(Node)^.next;
+    result:=pInkNodeStack(Node)^.DATA;
+end;
+
+procedure InkNodeStack_setDATA(const node:pointer; const DATA:pointer);
+begin
+    pInkNodeStack(Node)^.DATA:=DATA;
 end;
 
 end.
